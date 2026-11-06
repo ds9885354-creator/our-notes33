@@ -319,4 +319,498 @@
       }
 
       function sanitizeToken(input) {
-   
+        if (!input) return '';
+        return String(input).trim().replace(/['"]/g, '');
+      }
+
+      const state = {
+        messages: [],
+        currentSender: 'her',
+        currentMood: '🥰 Loving',
+        currentFilter: 'all',
+        ghToken: sanitizeToken(localStorage.getItem('sweet_gh_token') || localStorage.getItem('cozy_gh_token') || ''),
+        ghGistId: sanitizeGistId(localStorage.getItem('sweet_gh_gist_id') || localStorage.getItem('cozy_gh_gist_id') || '67021c152da1c03091faaff78359ad6f')
+      };
+
+      const defaultMessages = [
+        {
+          id: '1',
+          sender: 'her',
+          category: '☕ Coffee & Dates',
+          mood: '🥰 Loving',
+          text: 'Hope you have a sweet afternoon! Let us grab coffee later if you are free ☕❤️',
+          timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+          likes: 2
+        },
+        {
+          id: '2',
+          sender: 'me',
+          category: '🍕 Snack Wishlist',
+          mood: '😋 Craving',
+          text: 'Found a nice ramen spot nearby! Adding it to our weekend date list 🍜✨',
+          timestamp: new Date(Date.now() - 3600000 * 1).toISOString(),
+          likes: 1
+        }
+      ];
+
+      function getEl(id) {
+        return document.getElementById(id);
+      }
+
+      function triggerHeartsBurst(x, y) {
+        const container = getEl('heartCanvas');
+        if (!container) return;
+        const count = 10;
+        for (let i = 0; i < count; i++) {
+          const heart = document.createElement('div');
+          heart.className = 'heart-pop text-rose-400 text-sm';
+          heart.innerHTML = ['❤️', '💕', '💗', '✨', '🌸'][Math.floor(Math.random() * 5)];
+          heart.style.left = (x || (window.innerWidth / 2)) + (Math.random() * 80 - 40) + 'px';
+          heart.style.top = (y || (window.innerHeight / 2)) + (Math.random() * 20 - 10) + 'px';
+          container.appendChild(heart);
+          setTimeout(() => heart.remove(), 2000);
+        }
+      }
+
+      function showToast(message, type = 'info') {
+        const container = getEl('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl shadow-md border text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0 ${
+          type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+          type === 'error' ? 'bg-rose-50 text-rose-800 border-rose-200' :
+          'bg-slate-800 text-white border-slate-700'
+        }`;
+        const icon = type === 'success' ? 'fa-circle-check text-emerald-500' :
+                     type === 'error' ? 'fa-circle-exclamation text-rose-500' :
+                     'fa-circle-info text-rose-400';
+        toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 10);
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-4');
+          setTimeout(() => toast.remove(), 300);
+        }, 2500);
+      }
+
+      function escapeHtml(str) {
+        return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+
+      function formatTime(isoStr) {
+        try {
+          const date = new Date(isoStr);
+          const now = new Date();
+          const diffSec = Math.floor((now - date) / 1000);
+          if (diffSec < 60) return 'Just now';
+          if (diffSec < 3600) return Math.floor(diffSec / 60) + 'm ago';
+          if (diffSec < 86400) return Math.floor(diffSec / 3600) + 'h ago';
+          return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch(e) {
+          return 'Recently';
+        }
+      }
+
+      function toggleModal(modalId, cardId, show) {
+        const modal = getEl(modalId);
+        const card = getEl(cardId);
+        if (!modal || !card) return;
+        if (show) {
+          modal.classList.remove('hidden');
+          setTimeout(() => {
+            card.classList.remove('scale-95', 'opacity-0');
+            card.classList.add('scale-100', 'opacity-100');
+          }, 10);
+        } else {
+          card.classList.remove('scale-100', 'opacity-100');
+          card.classList.add('scale-95', 'opacity-0');
+          setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+      }
+
+      window.openSettings = function() {
+        const tokenInput = getEl('ghToken');
+        const gistIdInput = getEl('ghGistId');
+        if (tokenInput) tokenInput.value = state.ghToken;
+        if (gistIdInput) gistIdInput.value = state.ghGistId;
+        toggleModal('settingsModal', 'settingsModalCard', true);
+      };
+
+      window.closeSettings = function() {
+        toggleModal('settingsModal', 'settingsModalCard', false);
+      };
+
+      window.openGuide = function() {
+        toggleModal('guideModal', 'guideModalCard', true);
+      };
+
+      window.closeGuide = function() {
+        toggleModal('guideModal', 'guideModalCard', false);
+      };
+
+      window.setSender = function(who) {
+        state.currentSender = who;
+        const btnHer = getEl('senderHer');
+        const btnMe = getEl('senderMe');
+        if (who === 'her') {
+          if (btnHer) btnHer.className = 'sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-rose-300 bg-rose-50 text-rose-700 flex items-center justify-center gap-2 transition-all shadow-sm';
+          if (btnMe) btnMe.className = 'sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center gap-2 transition-all hover:bg-slate-50';
+        } else {
+          if (btnMe) btnMe.className = 'sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-slate-300 bg-slate-700 text-white flex items-center justify-center gap-2 transition-all shadow-sm';
+          if (btnHer) btnHer.className = 'sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center gap-2 transition-all hover:bg-slate-50';
+        }
+      };
+
+      window.setMood = function(mood, btnEl) {
+        state.currentMood = mood;
+        const moodHidden = getEl('selectedMood');
+        if (moodHidden) moodHidden.value = mood;
+        document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('bg-rose-100', 'text-rose-600'));
+        if (btnEl) btnEl.classList.add('bg-rose-100', 'text-rose-600');
+      };
+
+      window.setQuickText = function(txt) {
+        const msgText = getEl('msgText');
+        const charCounter = getEl('charCounter');
+        if (msgText) {
+          msgText.value = txt;
+          if (charCounter) charCounter.textContent = `${txt.length} / 500`;
+          msgText.focus();
+        }
+      };
+
+      window.setFilter = function(filterVal, btnEl) {
+        state.currentFilter = filterVal;
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.className = 'filter-btn px-3 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all';
+        });
+        if (btnEl) btnEl.className = 'filter-btn active-filter px-3 py-1 rounded-lg font-medium bg-rose-500 text-white transition-all';
+        renderFeed();
+      };
+
+      window.refreshBoard = function() {
+        loadMessages();
+        showToast('Refreshed board', 'info');
+      };
+
+      window.clearBoard = function() {
+        state.messages = [];
+        saveLocalMessages();
+        renderFeed();
+        showToast('Cleared board', 'info');
+      };
+
+      window.testConnection = async function() {
+        const tokenInput = getEl('ghToken');
+        const token = sanitizeToken(tokenInput ? tokenInput.value : '');
+        if (!token) {
+          showToast('Enter token first', 'error');
+          return;
+        }
+        showToast('Testing key...', 'info');
+        try {
+          let res = await fetch('https://api.github.com/user', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!res.ok) {
+            res = await fetch('https://api.github.com/user', {
+              headers: { 'Authorization': `token ${token}` }
+            });
+          }
+          if (res.ok) {
+            const userData = await res.json();
+            showToast(`Connected as @${userData.login}`, 'success');
+          } else {
+            showToast('Invalid token or missing scope', 'error');
+          }
+        } catch(err) {
+          showToast('Network error', 'error');
+        }
+      };
+
+      async function fetchGistContent(gistId, token) {
+        if (!gistId) return null;
+        if (token) {
+          try {
+            const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+              headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (res.ok) return await res.json();
+          } catch(e) {}
+
+          try {
+            const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+              headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (res.ok) return await res.json();
+          } catch(e) {}
+        }
+
+        try {
+          const resNoAuth = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' }
+          });
+          if (resNoAuth.ok) return await resNoAuth.json();
+        } catch(e) {}
+
+        return null;
+      }
+
+      async function loadMessages() {
+        const rawLocal = localStorage.getItem('sweet_messages');
+        if (rawLocal) {
+          try {
+            state.messages = JSON.parse(rawLocal);
+          } catch(e) {
+            state.messages = defaultMessages;
+          }
+        } else {
+          state.messages = defaultMessages;
+          saveLocalMessages();
+        }
+
+        if (state.ghGistId) {
+          updateSyncStatus('syncing', 'Syncing Gist...');
+          const gistData = await fetchGistContent(state.ghGistId, state.ghToken);
+          if (gistData && gistData.files) {
+            const fileObj = gistData.files['cozy_notes.json'] || gistData.files['sweetdrop_notes.json'] || Object.values(gistData.files)[0];
+            if (fileObj && fileObj.content) {
+              try {
+                const parsed = JSON.parse(fileObj.content);
+                if (Array.isArray(parsed)) {
+                  state.messages = parsed;
+                  saveLocalMessages();
+                  updateSyncStatus('connected', 'Synced with GitHub');
+                }
+              } catch(e) {
+                updateSyncStatus('connected', 'Connected to Gist');
+              }
+            } else {
+              updateSyncStatus('connected', 'Connected to Gist');
+            }
+          } else if (state.ghToken) {
+            updateSyncStatus('error', 'Check Gist ID / Token');
+          } else {
+            updateSyncStatus('local', 'Local Storage Mode');
+          }
+        } else if (state.ghToken) {
+          updateSyncStatus('connected', 'Token Set (Ready to Sync)');
+        } else {
+          updateSyncStatus('local', 'Local Storage Mode');
+        }
+
+        renderFeed();
+      }
+
+      function saveLocalMessages() {
+        localStorage.setItem('sweet_messages', JSON.stringify(state.messages));
+      }
+
+      async function syncToGitHubGist() {
+        if (!state.ghToken) return;
+        updateSyncStatus('syncing', 'Saving...');
+        const jsonContent = JSON.stringify(state.messages, null, 2);
+
+        try {
+          if (state.ghGistId) {
+            let res = await fetch(`https://api.github.com/gists/${state.ghGistId}`, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bearer ${state.ghToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                description: 'SweetCorner Private Notes',
+                files: { 'cozy_notes.json': { content: jsonContent } }
+              })
+            });
+
+            if (!res.ok) {
+              res = await fetch(`https://api.github.com/gists/${state.ghGistId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `token ${state.ghToken}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  description: 'SweetCorner Private Notes',
+                  files: { 'cozy_notes.json': { content: jsonContent } }
+                })
+              });
+            }
+
+            if (res.ok) {
+              updateSyncStatus('connected', 'Saved to GitHub');
+              showToast('Saved to Gist', 'success');
+            } else {
+              throw new Error('Save failed');
+            }
+          }
+        } catch(err) {
+          updateSyncStatus('error', 'Sync Failed');
+          showToast('Could not save to GitHub', 'error');
+        }
+      }
+
+      function updateSyncStatus(status, text) {
+        const dot = getEl('syncStatusDot');
+        const txt = getEl('syncStatusText');
+        if (txt) txt.textContent = text;
+        if (dot) {
+          if (status === 'connected') {
+            dot.className = 'w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse';
+          } else if (status === 'syncing') {
+            dot.className = 'w-2 h-2 rounded-full bg-blue-500 inline-block animate-ping';
+          } else if (status === 'error') {
+            dot.className = 'w-2 h-2 rounded-full bg-red-500 inline-block';
+          } else {
+            dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block';
+          }
+        }
+      }
+
+      function renderFeed() {
+        const feed = getEl('messageFeed');
+        const badge = getEl('msgCountBadge');
+        if (!feed) return;
+
+        const filtered = state.messages.filter(m => {
+          if (state.currentFilter === 'all') return true;
+          return m.category === state.currentFilter;
+        });
+
+        if (badge) badge.textContent = `${state.messages.length} ${state.messages.length === 1 ? 'note' : 'notes'}`;
+
+        if (filtered.length === 0) {
+          const empty = getEl('emptyFeed');
+          feed.innerHTML = '';
+          if (empty) feed.appendChild(empty);
+          return;
+        }
+
+        feed.innerHTML = filtered.map(m => {
+          const isHer = m.sender === 'her';
+          const bgCard = isHer ? 'bg-rose-50/70 border-rose-200' : 'bg-white border-slate-200';
+          const avatarBg = isHer ? 'bg-rose-500 text-white' : 'bg-slate-700 text-white';
+          const avatarIcon = isHer ? 'fa-crown' : 'fa-user';
+          const senderName = isHer ? 'Her' : 'Me';
+
+          return `
+            <div class="p-3.5 rounded-2xl border ${bgCard} shadow-sm transition-all hover:shadow-md space-y-2 group relative">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full ${avatarBg} flex items-center justify-center text-[10px]">
+                    <i class="fa-solid ${avatarIcon}"></i>
+                  </div>
+                  <span class="font-bold text-slate-800 text-[11px]">${senderName}</span>
+                  <span class="text-[10px] text-rose-700 bg-rose-100/70 px-2 py-0.5 rounded-full font-medium">${escapeHtml(m.category)}</span>
+                  <span class="text-[10px] text-slate-500">${escapeHtml(m.mood || '')}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] text-slate-400 font-medium">${formatTime(m.timestamp)}</span>
+                  <button onclick="window.appLikeNote('${m.id}')" class="text-xs text-rose-400 hover:text-rose-600 transition-colors flex items-center gap-1">
+                    <i class="fa-solid fa-heart"></i>
+                    <span class="text-[10px] font-bold">${m.likes || 0}</span>
+                  </button>
+                  <button onclick="window.appDeleteNote('${m.id}')" class="text-xs text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="text-xs text-slate-700 leading-relaxed font-sans whitespace-pre-wrap pl-8">${escapeHtml(m.text)}</p>
+            </div>
+          `;
+        }).join('');
+      }
+
+      window.appLikeNote = function(id) {
+        const msg = state.messages.find(m => m.id === id);
+        if (msg) {
+          msg.likes = (msg.likes || 0) + 1;
+          saveLocalMessages();
+          renderFeed();
+          triggerHeartsBurst();
+          syncToGitHubGist();
+        }
+      };
+
+      window.appDeleteNote = function(id) {
+        state.messages = state.messages.filter(m => m.id !== id);
+        saveLocalMessages();
+        renderFeed();
+        showToast('Note removed', 'info');
+        syncToGitHubGist();
+      };
+
+      function setupEvents() {
+        const msgText = getEl('msgText');
+        const charCounter = getEl('charCounter');
+        if (msgText) {
+          msgText.addEventListener('input', (e) => {
+            if (charCounter) charCounter.textContent = `${e.target.value.length} / 500`;
+          });
+        }
+
+        const form = getEl('messageForm');
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = msgText ? msgText.value.trim() : '';
+            if (!text) return;
+
+            const newMsg = {
+              id: Date.now().toString(),
+              sender: state.currentSender,
+              category: getEl('msgCategory') ? getEl('msgCategory').value : '💌 Sweet Note',
+              mood: state.currentMood,
+              text: text,
+              timestamp: new Date().toISOString(),
+              likes: 0
+            };
+
+            state.messages.unshift(newMsg);
+            saveLocalMessages();
+            renderFeed();
+            triggerHeartsBurst();
+
+            if (msgText) msgText.value = '';
+            if (charCounter) charCounter.textContent = '0 / 500';
+
+            showToast('Note posted!', 'success');
+            syncToGitHubGist();
+          });
+        }
+
+        const settingsForm = getEl('settingsForm');
+        if (settingsForm) {
+          settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const tInput = getEl('ghToken');
+            const gInput = getEl('ghGistId');
+            state.ghToken = sanitizeToken(tInput ? tInput.value : '');
+            state.ghGistId = sanitizeGistId(gInput ? gInput.value : '67021c152da1c03091faaff78359ad6f');
+            localStorage.setItem('sweet_gh_token', state.ghToken);
+            localStorage.setItem('sweet_gh_gist_id', state.ghGistId);
+
+            window.closeSettings();
+            showToast('Settings saved!', 'success');
+            loadMessages();
+          });
+        }
+
+        setInterval(() => {
+          if (state.ghGistId) {
+            loadMessages();
+          }
+        }, 10000);
+      }
+
+      setupEvents();
+      loadMessages();
+    })();
+  </script>
+</body>
+</html>
