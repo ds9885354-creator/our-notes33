@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CozyCorner - Shared Notes & Check-ins</title>
+  <title>SweetCorner - Private Notes & Check-ins</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
@@ -11,23 +11,21 @@
       theme: {
         extend: {
           colors: {
-            sage: {
-              50: '#f4f7f4',
-              100: '#e3eae3',
-              200: '#c7d6c8',
-              300: '#a3bda4',
-              400: '#7a9d7b',
-              500: '#5c7f5d',
-              600: '#466447',
-              700: '#39503a',
+            rose: {
+              50: '#fff5f6',
+              100: '#ffe4e8',
+              200: '#fecdd6',
+              300: '#fda4b4',
+              400: '#fb718b',
+              500: '#f43f60',
+              600: '#e11d43',
+              700: '#be1234',
             },
             warm: {
               50: '#fdfbf7',
-              100: '#f7f2e8',
-              200: '#efe4d2',
-              300: '#e2cfb2',
-              400: '#d0b38c',
-              500: '#bf9868',
+              100: '#f8f3ea',
+              200: '#f1e6d4',
+              300: '#e4d1b5',
             }
           },
           fontFamily: {
@@ -38,24 +36,35 @@
     }
   </script>
   <style>
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-70px) scale(1.3); opacity: 0; }
+    }
+    .heart-pop {
+      position: absolute;
+      animation: floatUp 2s ease-out forwards;
+      pointer-events: none;
+    }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(92, 127, 93, 0.05); border-radius: 8px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(92, 127, 93, 0.25); border-radius: 8px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(92, 127, 93, 0.4); }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(244, 63, 96, 0.05); border-radius: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(244, 63, 96, 0.25); border-radius: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(244, 63, 96, 0.4); }
   </style>
 </head>
-<body class="bg-gradient-to-br from-warm-50 via-sage-50 to-emerald-50/30 min-h-screen font-sans text-slate-700 flex flex-col antialiased selection:bg-sage-200">
+<body class="bg-gradient-to-br from-rose-50 via-warm-50 to-pink-50/40 min-h-screen font-sans text-slate-700 flex flex-col antialiased selection:bg-rose-200">
+
+  <div id="heartCanvas" class="fixed inset-0 pointer-events-none overflow-hidden z-0"></div>
 
   <div class="relative z-10 flex flex-col min-h-screen max-w-4xl mx-auto w-full px-4 py-6">
 
-    <header class="bg-white/85 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-sm border border-sage-100 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <header class="bg-white/85 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-sm border border-rose-100 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sage-500 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-sage-200/50 text-lg font-bold">
-          <i class="fa-solid fa-mug-hot"></i>
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-400 flex items-center justify-center text-white shadow-md shadow-rose-200 text-lg font-bold">
+          <i class="fa-solid fa-heart animate-pulse"></i>
         </div>
         <div>
-          <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-            CozyCorner <span class="text-xs bg-sage-100 text-sage-700 px-2 py-0.5 rounded-full font-medium border border-sage-200">Shared Notes</span>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-rose-700 via-pink-600 to-rose-500 bg-clip-text text-transparent flex items-center gap-2">
+            SweetCorner <span class="text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-medium border border-rose-200">Shared Board</span>
           </h1>
           <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
             <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
@@ -65,23 +74,23 @@
       </div>
 
       <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-        <button id="btnGuide" class="px-3.5 py-2 text-xs font-semibold text-sage-700 bg-sage-50 hover:bg-sage-100 rounded-xl border border-sage-200 transition-all flex items-center gap-1.5">
+        <button type="button" onclick="window.openGuide()" class="px-3.5 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200 transition-all flex items-center gap-1.5 cursor-pointer">
           <i class="fa-solid fa-book-open"></i> Setup Guide
         </button>
-        <button id="btnSettings" class="px-3.5 py-2 text-xs font-semibold text-white bg-sage-600 hover:bg-sage-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+        <button type="button" onclick="window.openSettings()" class="px-3.5 py-2 text-xs font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
           <i class="fa-solid fa-key"></i> Sync Settings
         </button>
       </div>
     </header>
 
     <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
-      <section class="lg:col-span-5 bg-white/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-sage-100 space-y-4">
-        <div class="flex items-center justify-between border-b border-sage-100 pb-3">
+      <section class="lg:col-span-5 bg-white/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-rose-100 space-y-4">
+        <div class="flex items-center justify-between border-b border-rose-100 pb-3">
           <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-pen-to-square text-sage-600"></i> Drop a Note
+            <i class="fa-solid fa-pen-rose text-rose-500 fa-regular fa-paper-plane"></i> Drop a Note
           </h2>
-          <span class="text-xs text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded-full border border-sage-100">
-            Easy Check-in
+          <span class="text-xs text-rose-600 font-medium bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-100">
+            For Your Partner 💌
           </span>
         </div>
 
@@ -89,37 +98,37 @@
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Who is posting?</label>
             <div class="grid grid-cols-2 gap-2">
-              <button type="button" id="senderHer" class="sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-sage-300 bg-sage-50 text-sage-700 flex items-center justify-center gap-2 transition-all shadow-sm">
-                <i class="fa-solid fa-face-smile text-sage-600"></i> Her
+              <button type="button" id="senderHer" onclick="window.setSender('her')" class="sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-rose-300 bg-rose-50 text-rose-700 flex items-center justify-center gap-2 transition-all shadow-sm">
+                <i class="fa-solid fa-crown text-pink-500"></i> Her
               </button>
-              <button type="button" id="senderMe" class="sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center gap-2 transition-all hover:bg-slate-50">
-                <i class="fa-solid fa-user text-slate-400"></i> Me
+              <button type="button" id="senderMe" onclick="window.setSender('me')" class="sender-btn py-2 px-3 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center gap-2 transition-all hover:bg-slate-50">
+                <i class="fa-solid fa-user text-rose-400"></i> Me
               </button>
             </div>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Category</label>
-            <select id="msgCategory" class="w-full text-xs font-medium rounded-xl border border-slate-200 p-2.5 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sage-400 transition-all">
-              <option value="☕ Daily Catch-up">☕ Daily Catch-up</option>
-              <option value="🍕 Food & Snacks">🍕 Food & Snacks Wishlist</option>
-              <option value="🎬 Movies & Shows">🎬 Movie / Show Idea</option>
-              <option value="💭 Random Thought">💭 Random Thought</option>
-              <option value="✨ Quick Reminder">✨ Quick Reminder</option>
+            <select id="msgCategory" class="w-full text-xs font-medium rounded-xl border border-slate-200 p-2.5 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all">
+              <option value="💌 Sweet Note">💌 Sweet Note</option>
+              <option value="☕ Coffee & Dates">☕ Coffee & Dates</option>
+              <option value="🍕 Snack Wishlist">🍕 Snack Wishlist</option>
+              <option value="🎬 Movie Night">🎬 Movie Night Idea</option>
+              <option value="✨ Random Love">✨ Random Love</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1.5">How are you feeling?</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Current Vibe</label>
             <div class="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200 text-lg">
-              <button type="button" data-mood="😊 Chill" class="mood-btn p-1.5 rounded-lg hover:bg-sage-100 transition-all text-sage-700 bg-sage-100">😊</button>
-              <button type="button" data-mood="😌 Peaceful" class="mood-btn p-1.5 rounded-lg hover:bg-sage-100 transition-all">😌</button>
-              <button type="button" data-mood="🥳 Excited" class="mood-btn p-1.5 rounded-lg hover:bg-sage-100 transition-all">🥳</button>
-              <button type="button" data-mood="😴 Tired" class="mood-btn p-1.5 rounded-lg hover:bg-sage-100 transition-all">😴</button>
-              <button type="button" data-mood="😋 Hungry" class="mood-btn p-1.5 rounded-lg hover:bg-sage-100 transition-all">😋</button>
-              <button type="button" data-mood="🤯 Busy" class="mood-btn p-1.5 rounded-lg hover:bg-sage-100 transition-all">🤯</button>
+              <button type="button" onclick="window.setMood('🥰 Loving', this)" class="mood-btn p-1.5 rounded-lg hover:bg-rose-100 transition-all text-rose-600 bg-rose-100">🥰</button>
+              <button type="button" onclick="window.setMood('😌 Cozy', this)" class="mood-btn p-1.5 rounded-lg hover:bg-rose-100 transition-all">😌</button>
+              <button type="button" onclick="window.setMood('🥳 Excited', this)" class="mood-btn p-1.5 rounded-lg hover:bg-rose-100 transition-all">🥳</button>
+              <button type="button" onclick="window.setMood('🥺 Needy', this)" class="mood-btn p-1.5 rounded-lg hover:bg-rose-100 transition-all">🥺</button>
+              <button type="button" onclick="window.setMood('😋 Craving', this)" class="mood-btn p-1.5 rounded-lg hover:bg-rose-100 transition-all">😋</button>
+              <button type="button" onclick="window.setMood('😴 Tired', this)" class="mood-btn p-1.5 rounded-lg hover:bg-rose-100 transition-all">😴</button>
             </div>
-            <input type="hidden" id="selectedMood" value="😊 Chill">
+            <input type="hidden" id="selectedMood" value="🥰 Loving">
           </div>
 
           <div>
@@ -127,63 +136,63 @@
               <label for="msgText" class="text-xs font-semibold text-slate-600">Note Content</label>
               <span id="charCounter" class="text-[10px] text-slate-400">0 / 500</span>
             </div>
-            <textarea id="msgText" rows="4" maxlength="500" placeholder="Drop a quick note or update..." class="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-sage-400 transition-all bg-slate-50/50 focus:bg-white resize-none custom-scrollbar" required></textarea>
+            <textarea id="msgText" rows="4" maxlength="500" placeholder="Drop a cute note or update..." class="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all bg-slate-50/50 focus:bg-white resize-none custom-scrollbar" required></textarea>
           </div>
 
           <div class="flex flex-wrap gap-1.5 pt-1">
-            <button type="button" data-quick="Hope your day is going awesome! 🌿" class="quick-prompt text-[11px] bg-sage-50 text-sage-700 hover:bg-sage-100 px-2.5 py-1 rounded-lg border border-sage-200 transition-all">Have a great day 🌿</button>
-            <button type="button" data-quick="What should we eat later? 🍜" class="quick-prompt text-[11px] bg-sage-50 text-sage-700 hover:bg-sage-100 px-2.5 py-1 rounded-lg border border-sage-200 transition-all">What to eat? 🍜</button>
-            <button type="button" data-quick="Tell me when you are free! ☕" class="quick-prompt text-[11px] bg-sage-50 text-sage-700 hover:bg-sage-100 px-2.5 py-1 rounded-lg border border-sage-200 transition-all">Free later? ☕</button>
+            <button type="button" onclick="window.setQuickText('Thinking of you right now! ❤️')" class="quick-prompt text-[11px] bg-rose-50 text-rose-700 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition-all">Thinking of you ❤️</button>
+            <button type="button" onclick="window.setQuickText('Let us grab food later! 🍜')" class="quick-prompt text-[11px] bg-rose-50 text-rose-700 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition-all">Grab food? 🍜</button>
+            <button type="button" onclick="window.setQuickText('Send me a hug! 🤗')" class="quick-prompt text-[11px] bg-rose-50 text-rose-700 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition-all">Need a hug 🤗</button>
           </div>
 
-          <button type="submit" id="btnSubmitMsg" class="w-full py-2.5 bg-sage-600 hover:bg-sage-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
+          <button type="submit" id="btnSubmitMsg" class="w-full py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold text-xs rounded-xl shadow-md shadow-rose-200 transition-all flex items-center justify-center gap-2 cursor-pointer">
             <span>Post Note</span>
-            <i class="fa-solid fa-paper-plane text-xs"></i>
+            <i class="fa-solid fa-heart text-xs text-white"></i>
           </button>
         </form>
       </section>
 
-      <section class="lg:col-span-7 bg-white/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-sage-100 flex flex-col h-[580px]">
-        <div class="flex items-center justify-between border-b border-sage-100 pb-3 mb-4 flex-shrink-0">
+      <section class="lg:col-span-7 bg-white/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-rose-100 flex flex-col h-[580px]">
+        <div class="flex items-center justify-between border-b border-rose-100 pb-3 mb-4 flex-shrink-0">
           <div class="flex items-center gap-2">
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-clipboard-list text-sage-600"></i> Board Feed
+              <i class="fa-solid fa-clipboard-list text-rose-500"></i> Shared Board Feed
             </h2>
-            <span id="msgCountBadge" class="text-xs bg-sage-100 text-sage-700 px-2 py-0.5 rounded-full font-bold">0 notes</span>
+            <span id="msgCountBadge" class="text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-bold">0 notes</span>
           </div>
 
           <div class="flex items-center gap-2">
-            <button id="btnSyncNow" class="text-xs text-slate-600 hover:text-sage-700 bg-slate-100 hover:bg-sage-50 px-2.5 py-1.5 rounded-lg border border-slate-200 transition-all flex items-center gap-1">
+            <button type="button" onclick="window.refreshBoard()" class="text-xs text-slate-600 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-slate-200 transition-all flex items-center gap-1 cursor-pointer">
               <i class="fa-solid fa-rotate"></i> Refresh
             </button>
-            <button id="btnClearAll" class="text-xs text-slate-400 hover:text-red-500 p-1.5 rounded-lg transition-all" title="Clear Board">
+            <button type="button" onclick="window.clearBoard()" class="text-xs text-slate-400 hover:text-red-500 p-1.5 rounded-lg transition-all cursor-pointer" title="Clear Board">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
         </div>
 
         <div class="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 flex-shrink-0 text-xs">
-          <button data-filter="all" class="filter-btn active-filter px-3 py-1 rounded-lg font-medium bg-sage-600 text-white transition-all">All</button>
-          <button data-filter="☕ Daily Catch-up" class="filter-btn px-3 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-sage-50 hover:text-sage-700 transition-all">☕ Catch-ups</button>
-          <button data-filter="🍕 Food & Snacks" class="filter-btn px-3 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-sage-50 hover:text-sage-700 transition-all">🍕 Food</button>
-          <button data-filter="💭 Random Thought" class="filter-btn px-3 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-sage-50 hover:text-sage-700 transition-all">💭 Thoughts</button>
+          <button type="button" onclick="window.setFilter('all', this)" class="filter-btn active-filter px-3 py-1 rounded-lg font-medium bg-rose-500 text-white transition-all">All</button>
+          <button type="button" onclick="window.setFilter('💌 Sweet Note', this)" class="filter-btn px-3 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all">💌 Sweet Notes</button>
+          <button type="button" onclick="window.setFilter('☕ Coffee & Dates', this)" class="filter-btn px-3 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all">☕ Dates</button>
+          <button type="button" onclick="window.setFilter('🍕 Snack Wishlist', this)" class="filter-btn px-3 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all">🍕 Snacks</button>
         </div>
 
         <div id="messageFeed" class="flex-1 overflow-y-auto space-y-3.5 pr-1 custom-scrollbar">
           <div id="emptyFeed" class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
-            <div class="w-14 h-14 rounded-full bg-sage-50 border border-sage-100 flex items-center justify-center text-sage-400 text-xl mb-3">
-              <i class="fa-regular fa-note-sticky"></i>
+            <div class="w-14 h-14 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-300 text-xl mb-3">
+              <i class="fa-regular fa-heart"></i>
             </div>
             <p class="text-xs font-semibold text-slate-600">Your board is clean!</p>
-            <p class="text-[11px] text-slate-400 mt-1 max-w-xs">Write a note on the left to pin it here.</p>
+            <p class="text-[11px] text-slate-400 mt-1 max-w-xs">Post a note on the left to pin it here.</p>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="mt-6 text-center text-xs text-slate-500 py-3 border-t border-sage-100 flex flex-col sm:flex-row items-center justify-between gap-2">
+    <footer class="mt-6 text-center text-xs text-slate-500 py-3 border-t border-rose-100 flex flex-col sm:flex-row items-center justify-between gap-2">
       <p class="flex items-center gap-1 text-slate-500">
-        Cozy & Private GitHub Note Exchange 🌿
+        Designed with <i class="fa-solid fa-heart text-rose-500 text-[10px]"></i> for your shared GitHub notes 🌸
       </p>
       <p class="text-[11px] text-slate-400">
         Hosted via GitHub Pages • Powered by GitHub Gist API
@@ -192,44 +201,44 @@
   </div>
 
   <div id="settingsModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl shadow-xl border border-sage-100 max-w-md w-full p-6 space-y-4 relative transform transition-all scale-95 opacity-0" id="settingsModalCard">
-      <button id="btnCloseSettings" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-all">
+    <div class="bg-white rounded-2xl shadow-xl border border-rose-100 max-w-md w-full p-6 space-y-4 relative transform transition-all scale-95 opacity-0" id="settingsModalCard">
+      <button type="button" onclick="window.closeSettings()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer">
         <i class="fa-solid fa-xmark"></i>
       </button>
 
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-sage-100 text-sage-700 flex items-center justify-center text-lg">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-lg">
           <i class="fa-solid fa-key"></i>
         </div>
         <div>
           <h3 class="text-sm font-bold text-slate-800">GitHub Sync Configuration</h3>
-          <p class="text-xs text-slate-500">Connect your secret key to save notes to GitHub Gist.</p>
+          <p class="text-xs text-slate-500">Connect your secret key to save notes across devices.</p>
         </div>
       </div>
 
       <form id="settingsForm" class="space-y-3 pt-2">
         <div>
           <label for="ghToken" class="block text-xs font-semibold text-slate-700 mb-1">GitHub Personal Access Token (PAT)</label>
-          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-sage-400 font-mono">
-          <p class="text-[10px] text-slate-400 mt-1">Stored safely in your browser localStorage only.</p>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-rose-300 font-mono">
+          <p class="text-[10px] text-slate-400 mt-1">Paste your key starting with ghp_ here.</p>
         </div>
 
         <div>
-          <label for="ghGistId" class="block text-xs font-semibold text-slate-700 mb-1">GitHub Gist ID or Gist Link</label>
-          <input type="text" id="ghGistId" placeholder="e.g. 67021c152da1c03091faaff78359ad6f" class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-sage-400 font-mono">
-          <p class="text-[10px] text-slate-400 mt-1">Paste your Gist ID or script link here!</p>
+          <label for="ghGistId" class="block text-xs font-semibold text-slate-700 mb-1">GitHub Gist ID (Box 2)</label>
+          <input type="text" id="ghGistId" placeholder="e.g. 67021c152da1c03091faaff78359ad6f" class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-rose-300 font-mono">
+          <p class="text-[10px] text-slate-400 mt-1">Paste 67021c152da1c03091faaff78359ad6f here on both phones!</p>
         </div>
 
-        <div class="p-3 bg-sage-50 rounded-xl border border-sage-200 text-[11px] text-sage-800 space-y-1">
-          <p class="font-semibold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-sage-600"></i> How Sync Works:</p>
-          <p>Your board notes stay synced in a private secret Gist via GitHub's API. Auto-syncs every 10 seconds!</p>
+        <div class="p-3 bg-rose-50 rounded-xl border border-rose-100 text-[11px] text-rose-800 space-y-1">
+          <p class="font-semibold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-rose-500"></i> How Sync Works:</p>
+          <p>Your notes are stored inside a private secret Gist via GitHub's API. Auto-syncs every 10 seconds!</p>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2">
-          <button type="button" id="btnTestConn" class="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all">
+          <button type="button" onclick="window.testConnection()" class="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer">
             Test Key
           </button>
-          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-sage-600 hover:bg-sage-700 rounded-xl shadow-sm transition-all">
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl shadow-sm transition-all cursor-pointer">
             Save Settings
           </button>
         </div>
@@ -238,13 +247,13 @@
   </div>
 
   <div id="guideModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl shadow-xl border border-sage-100 max-w-lg w-full p-6 space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar" id="guideModalCard">
-      <button id="btnCloseGuide" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-all">
+    <div class="bg-white rounded-2xl shadow-xl border border-rose-100 max-w-lg w-full p-6 space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar" id="guideModalCard">
+      <button type="button" onclick="window.closeGuide()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer">
         <i class="fa-solid fa-xmark"></i>
       </button>
 
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-sage-100 text-sage-700 flex items-center justify-center text-lg">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-lg">
           <i class="fa-solid fa-book-open"></i>
         </div>
         <div>
@@ -256,43 +265,42 @@
       <div class="space-y-4 text-xs text-slate-600 pt-2">
         <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-800 flex items-center gap-2 mb-1">
-            <span class="w-5 h-5 rounded-full bg-sage-600 text-white flex items-center justify-center text-[10px]">1</span>
+            <span class="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px]">1</span>
             Generate GitHub Token (Secret Key)
           </h4>
           <p class="pl-7 text-slate-600 leading-relaxed">
             1. Open <strong>GitHub.com &gt; Settings &gt; Developer Settings &gt; Personal Access Tokens (Classic)</strong>.<br>
             2. Click <strong>Generate New Token</strong>.<br>
-            3. Select the <code class="bg-sage-100 text-sage-800 px-1 rounded">gist</code> permission checkbox.<br>
-            4. Copy your token (starts with <code class="bg-sage-100 text-sage-800 px-1 rounded">ghp_</code>) into <strong>Sync Settings</strong>!
+            3. Check the <code class="bg-rose-100 text-rose-800 px-1 rounded">gist</code> checkbox ✅.<br>
+            4. Copy your key (starts with <code class="bg-rose-100 text-rose-800 px-1 rounded">ghp_</code>) into Box 1!
           </p>
         </div>
 
-        <div class="p-3 bg-slate-50 rounded-xl border border-sage-200">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-800 flex items-center gap-2 mb-1">
-            <span class="w-5 h-5 rounded-full bg-sage-600 text-white flex items-center justify-center text-[10px]">2</span>
+            <span class="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px]">2</span>
             Host on GitHub Pages (Free)
           </h4>
           <p class="pl-7 text-slate-600 leading-relaxed">
-            1. Create a repository named <code class="bg-sage-100 text-sage-800 px-1 rounded">our-notes33</code> on GitHub.<br>
-            2. Upload this HTML file as <code class="bg-sage-100 text-sage-800 px-1 rounded">index.html</code>.<br>
-            3. In <strong>Repo Settings &gt; Pages</strong>, select the <code class="bg-sage-100 text-sage-800 px-1 rounded">main</code> branch and click <strong>Save</strong>.<br>
-            4. Share your clean page link!
+            1. Create a repository named <code class="bg-rose-100 text-rose-800 px-1 rounded">our-notes33</code> on GitHub.<br>
+            2. Upload this HTML file as <code class="bg-rose-100 text-rose-800 px-1 rounded">index.html</code>.<br>
+            3. In <strong>Repo Settings &gt; Pages</strong>, select the <code class="bg-rose-100 text-rose-800 px-1 rounded">main</code> branch and click <strong>Save</strong>.
           </p>
         </div>
 
-        <div class="p-3 bg-slate-50 rounded-xl border border-sage-200">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-800 flex items-center gap-2 mb-1">
-            <span class="w-5 h-5 rounded-full bg-sage-600 text-white flex items-center justify-center text-[10px]">3</span>
-            Enjoy Your Shared Space
+            <span class="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px]">3</span>
+            Paste Gist ID on Both Phones
           </h4>
           <p class="pl-7 text-slate-600 leading-relaxed">
-            Open the site whenever you want to leave a quick update, food idea, or catch-up note. Simple, cozy, and private!
+            Paste <code class="bg-rose-100 text-rose-800 px-1 rounded">67021c152da1c03091faaff78359ad6f</code> into Box 2 on both phones to stay in sync!
           </p>
         </div>
       </div>
 
       <div class="pt-2 flex justify-end">
-        <button type="button" id="btnDoneGuide" class="px-4 py-2 text-xs font-semibold text-white bg-sage-600 hover:bg-sage-700 rounded-xl shadow-sm transition-all">
+        <button type="button" onclick="window.closeGuide()" class="px-4 py-2 text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl shadow-sm transition-all cursor-pointer">
           Done
         </button>
       </div>
@@ -311,41 +319,4 @@
       }
 
       function sanitizeToken(input) {
-        if (!input) return '';
-        return String(input).trim().replace(/['"]/g, '');
-      }
-
-      const state = {
-        messages: [],
-        currentSender: 'her',
-        currentMood: '😊 Chill',
-        currentFilter: 'all',
-        ghToken: sanitizeToken(localStorage.getItem('cozy_gh_token') || ''),
-        ghGistId: sanitizeGistId(localStorage.getItem('cozy_gh_gist_id') || '')
-      };
-
-      const defaultMessages = [
-        {
-          id: '1',
-          sender: 'her',
-          category: '☕ Daily Catch-up',
-          mood: '😊 Chill',
-          text: 'Hope you have a peaceful afternoon! Let us grab coffee later if you are free ☕',
-          timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
-          likes: 1
-        },
-        {
-          id: '2',
-          sender: 'me',
-          category: '🍕 Food & Snacks',
-          mood: '😋 Hungry',
-          text: 'Found a nice ramen spot nearby! Adding it to our weekend list 🍜✨',
-          timestamp: new Date(Date.now() - 3600000 * 1).toISOString(),
-          likes: 1
-        }
-      ];
-
-      const elements = {
-        messageForm: document.getElementById('messageForm'),
-        msgText: document.getElementById('msgText'),
-        msgCategory: document.getElementById('ms
+   
